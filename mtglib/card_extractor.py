@@ -71,6 +71,8 @@ class CardExtractor(object):
         cards = []
         p = [t for t in self.document.cssselect('td') if not t.get('colspan')]
         ims = [self.full_img_url(img.attrib['src']) for img in self.document.cssselect('td.leftCol a img')]
+        print 'ims:', len(ims)
+        print 'p:', len(p)
         card = Card()
         for label, value, img in zip(p[0::2], p[1::2], ims):
             attr = label.text_content().strip(': \n\r').replace(' ', '_').lower()
