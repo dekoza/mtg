@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import re
-import textwrap
 
 from lxml.html import parse
 
