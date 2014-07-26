@@ -34,7 +34,7 @@ class CardExtractor(object):
     def _flatten(self, element):
         """Recursively enter and extract text from all child
         elements."""
-        result = [ (element.text or '') ]
+        result = [(element.text or '')]
         if element.attrib.get('alt'):
             result.append(Symbol(element.attrib.get('alt')).textbox)
         for sel in element:
@@ -70,10 +70,10 @@ class CardExtractor(object):
     def extract_many(self):
         cards = []
         p = [t for t in self.document.cssselect('td') if not t.get('colspan')]
+        ims = [self.full_img_url(img.attrib['src']) for img in self.document.cssselect('td.leftCol a img')]
         card = Card()
-        for label, value in zip(p[0::2], p[1::2]):
-            attr = label.text_content().strip(': \n\r') \
-                                       .replace(' ', '_').lower()
+        for label, value, img in zip(p[0::2], p[1::2], ims):
+            attr = label.text_content().strip(': \n\r').replace(' ', '_').lower()
             if attr == 'name':
                 card.name = value.text_content().strip()
             if attr == 'type':
@@ -85,14 +85,18 @@ class CardExtractor(object):
             if attr == 'pow/tgh' and value.text_content().strip('\n\r() '):
                 card.power, card.toughness = self.split_pow_tgh(value.text_content().strip('\n\r() '))
             if attr == 'rules_text':
-                card.rules_text = value.text_content().strip().replace('\n', ' ; ')
+                card.rules_text = value.text_content().strip()  # .replace('\n', ' ; ')  # don't mess!
             if attr == 'set/rarity':
+                card.img_url = img  # we need to set it SOMEWHERE ;)
                 card.printings = self.printings_text(value)
 
                 # kind of a hack, set/rarity is always last.
                 cards.append(card)
                 card = Card()
         return cards
+
+    def full_img_url(self, txt):
+        return txt.replace('../..', "http://{}".format(self.card_source.split('/')[2]))
 
     def split_pow_tgh(self, text):
         """Split a power/toughness string on the correct slash.
@@ -142,9 +146,10 @@ class CardExtractor(object):
 
         for component in self.document.cssselect('td.cardComponentContainer'):
             if not component.getchildren():
-                continue # do not parse empty components
+                continue  # do not parse empty components
             labels = component.cssselect('div.label')
             values = component.cssselect('div.value')
+            img = component.cssselect('div.cardImage')
             pairs = zip(labels, values)
             card = Card()
             attributes = {}
