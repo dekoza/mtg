@@ -69,36 +69,31 @@ class CardExtractor(object):
 
     def extract_many(self):
         cards = []
-        p = [t for t in self.document.cssselect('td') if not t.get('colspan')]
-        ims = [self.full_img_url(img.attrib['src']) for img in self.document.cssselect('td.leftCol a img')]
-        print 'ims:', len(ims)
-        print 'p:', len(p)
-        card = Card()
-        for label, value, img in zip(p[0::2], p[1::2], ims):
-            attr = label.text_content().strip(': \n\r').replace(' ', '_').lower()
-            if attr == 'name':
-                card.name = value.text_content().strip()
-            if attr == 'type':
-                card.types, card.subtypes = self.types(value.text_content().strip())
-            if attr == 'cost':
-                card.mana_cost = value.text_content().strip()
-            if attr == 'loyalty':
-                card.loyalty = value.text_content().strip(' \n\r()')
-            if attr == 'pow/tgh' and value.text_content().strip('\n\r() '):
-                card.power, card.toughness = self.split_pow_tgh(value.text_content().strip('\n\r() '))
-            if attr == 'rules_text':
-                card.rules_text = value.text_content().strip()  # .replace('\n', ' ; ')  # don't mess!
-            if attr == 'set/rarity':
-                card.img_url = img  # we need to set it SOMEWHERE ;)
-                card.printings = self.printings_text(value)
+        for card_item in self.document.cssselect('.cardItem'):
+            card = Card()
+            cardinfo = card_item.cssselect('.cardInfo')[0]
+            card.name = self.text_field(cardinfo, '.cardTitle')
+            card.mana_cost = self.symbol_field(cardinfo, '.manaCost img')
+            card.rules_text = self.box_field(cardinfo, '.rulesText p', '\n')
+            card.img = self.img_field(card_item, '.leftCol a img')
 
-                # kind of a hack, set/rarity is always last.
-                cards.append(card)
-                card = Card()
+            typeline = self.text_field(cardinfo, '.typeLine')
+            if '(' in typeline:
+                typeline, number = typeline.rsplit(' ', 1)
+                number = number.strip('()')
+                if number.isnumeric():
+                    card.loyalty = number
+                else:
+                    card.power, card.toughness = self.split_pow_tgh(number)
+            card.types, card.subtypes = self.types(typeline.strip('\n '))
+            setinfo = card_item.cssselect('.setVersions')[0]
+            card.printings = self.printings(setinfo, 'img')
+            cards.append(card)
         return cards
 
-    def full_img_url(self, txt):
-        return txt.replace('../..', "http://{}".format(self.card_source.split('/')[2]))
+    def img_field(self, container, css):
+        tmp_url = container.cssselect(css)[0].attrib['src']
+        return tmp_url.replace('../..', "http://{}".format(self.card_source.split('/')[2]))
 
     def split_pow_tgh(self, text):
         """Split a power/toughness string on the correct slash.

@@ -1,11 +1,37 @@
 base_url = ('http://gatherer.wizards.com/Pages/Search/Default.aspx'
-            '?output=spoiler&method=text&action=advanced&')
+            '?action=advanced&')
 
 random_url = 'http://gatherer.wizards.com/Pages/Card/Details.aspx?action=random'
 
-TYPES = set(['artifact', 'basic', 'creature', 'enchantment', 'instant', 'land',
-             'legendary', 'ongoing', 'plane', 'planeswalker', 'scheme', 'snow',
-             'sorcery', 'tribal', 'vanguard', 'world'])
+TYPES = set([
+    'artifact',
+    'basic',
+    'conspiracy',
+    'creature',
+    'enchantment',
+    'instant',
+    'land',
+    'legendary',
+    'ongoing',
+    'phenomenon',
+    'plane',
+    'planeswalker',
+    'scheme',
+    'snow',
+    'sorcery',
+    'tribal',
+    'vanguard',
+    'world',
+])
+
+# Types that require "special = True" to show any cards
+SPECIAL_TYPES = set([
+    'conspiracy',
+    'phenomenon',
+    'plane',
+    'ongoing',
+    'scheme',
+])
 
 COLORS = {'w': 'W', 'u': 'U', 'b': 'B', 'r': 'R', 'g': 'G', 'c': 'C'}
 
